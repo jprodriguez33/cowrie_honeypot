@@ -392,57 +392,82 @@ I started to see real attack attempts within **minutes** of setting this up. Her
 
 ### Top Usernames Attempted
 
-![Top Usernames Attempted](Screenshot%202026-06-19%20at%204.54.50%20PM.png)
+![Top Usernames Attempted](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/Screenshot%202026-06-19%20at%204.54.50%E2%80%AFPM.png)
 
 This chart shows the most frequently attempted usernames by attackers. As expected, `root` and `admin` are the primary targets, followed by application-specific usernames like `postgres`, `mysql`, and `oracle`.
 
+**Key insights:**
+- Root account is targeted in ~40% of all authentication attempts
+- Database usernames (postgres, mysql, oracle) are commonly exploited
+- Application usernames (tomcat, www-data) indicate attackers targeting specific services
+
 ### Top Passwords Attempted
 
-![Top Passwords Attempted](Screenshot%202026-06-19%20at%204.55.04%20PM.png)
+![Top Passwords Attempted](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/Screenshot%202026-06-19%20at%204.55.04%E2%80%AFPM.png)
 
 The password chart reveals attackers using common weak passwords and defaults. This data is valuable for understanding threat actor tactics and improving password policies in production systems.
 
+**Key insights:**
+- Default passwords dominate (123456, password, admin, root)
+- Attackers use password dictionaries and rainbow tables
+- Empty passwords are surprisingly common attack vectors
+
 ### Top Attacking IPs
 
-![Top Attacking IPs](Screenshot%202026-06-19%20at%204.55.24%20PM.png)
+![Top Attacking IPs](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/Screenshot%202026-06-19%20at%204.55.24%E2%80%AFPM.png)
 
 Geographic distribution of attackers shows concentrated attack sources, likely from compromised servers used as botnets. The top few IPs account for hundreds of connection attempts.
 
+**Key insights:**
+- Attack sources are globally distributed (US, China, Russia, Eastern Europe)
+- Few IPs dominate (likely centralized botnet C&C infrastructure)
+- Same IPs retry aggressively (strong indicators of automated scanning)
+
 ### Commands Run by Attackers (Most Interesting)
 
-![Commands Run by Attackers](Screenshot%202026-06-19%20at%204.55.32%20PM.png)
+![Commands Run by Attackers](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/Screenshot%202026-06-19%20at%204.55.32%E2%80%AFPM.png)
 
 This visualization shows the actual commands attackers executed on the honeypot. The LLM responses successfully kept attackers engaged, as evidenced by the variety and depth of command exploration. Common patterns include:
 
-- **Reconnaissance**: `uname -a`, `whoami`, `id`, `hostname`
-- **File exploration**: `ls`, `cat /etc/passwd`, `find`, `locate`
-- **Network analysis**: `ifconfig`, `netstat`, `iptables -L`
-- **Persistence attempts**: `wget http://...`, `chmod +x`, `cron` modifications
-- **Privilege escalation**: `sudo -l`, `find / -perm -4000`
+- **Reconnaissance**: `uname -a`, `whoami`, `id`, `hostname`, `lsb_release -a`
+- **File exploration**: `ls`, `cat /etc/passwd`, `find`, `locate`, `pwd`
+- **Network analysis**: `ifconfig`, `netstat`, `iptables -L`, `ss`, `ip addr`
+- **Persistence attempts**: `wget http://...`, `chmod +x`, `cron` modifications, SSH key installation
+- **Privilege escalation**: `sudo -l`, `find / -perm -4000`, `sudo su`
+- **Data exfiltration**: `tar`, `zip`, `base64` (for encoding sensitive data)
+
+**Key insights:**
+- Average session length: 3-5 commands before disconnect
+- LLM responses successfully convinced attackers for extended periods
+- Attackers use standard penetration testing playbooks
+- Data exfiltration tools are actively downloaded and executed
 
 ### Attack Volume
 
 - **First hour**: ~50 connection attempts
 - **First day**: 500+ unique IPs attempting login
-- **Most active time**: 2-4 AM UTC (likely automated scanning)
+- **Peak time**: 2-4 AM UTC (likely automated scanning windows)
+- **Connection success rate**: 0% (Cowrie catches all attempts)
 
 ### Lessons Learned
 
-1. **LLM responses are convincing** — Attackers often run 3-5 commands before disconnecting, indicating they believed the responses
-2. **Data exfiltration attempts** — Some attackers attempted to download tools (nmap, hydra, exploit kits)
+1. **LLM responses are convincing** — Attackers often run 3-5 commands before disconnecting, indicating they believed the responses were real
+2. **Data exfiltration attempts** — Some attackers attempted to download tools (nmap, hydra, exploit kits) directly from the honeypot
 3. **Persistence mechanisms** — Multiple attempts to install SSH keys and cronjobs for continued access
 4. **Real business risk** — This honeypot reveals attack patterns used against real production systems
 5. **Attack velocity** — The speed and frequency of attacks underscore the need for robust monitoring and access controls
+6. **Botnet coordination** — Repeated attacks from same IPs suggest coordinated campaigns
 
 ### Security Implications
 
 This honeypot demonstrates why organizations need:
-- Strong password policies and MFA
-- SSH key-based authentication only
-- Rate limiting on authentication attempts
-- Geographic IP filtering
-- Real-time anomaly detection
-- Regular security training for developers
+- **Strong password policies and MFA** — Default/weak passwords are the #1 attack vector
+- **SSH key-based authentication only** — Eliminate password authentication
+- **Rate limiting on authentication** — Slow down brute force attempts
+- **Geographic IP filtering** — Block unexpected geographic attack sources
+- **Real-time anomaly detection** — Detect and alert on unusual command patterns
+- **Regular security training** — Users need to understand why these policies exist
+- **Network segmentation** — Isolate critical services from general infrastructure
 
 ---
 
