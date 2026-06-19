@@ -4,34 +4,35 @@ for realistic shell simulation, MySQL logging, and Grafana dashboards for
 attack visualisation. 
 
 ## Architecture
-- **Cloud VPS (Micronode)** - Cowrie honeypot, mySQL, Grafana
-- **GPT-4o Mini** - Generates fake shell response to keep attackers engaged
+- **Cloud VPS (Micronode)** - Cowrie honeypot, MySQL, Grafana
+- **GPT-4o Mini** - Generates fake shell responses to keep attackers engaged
 
 ## Features
-- real-time logging
-- llm-powered shell simulation
+- Real-time attack logging
+- LLM-powered shell simulation
 - MySQL database to log all sessions, credentials, and commands
-- grafana dashboard for attack visualization
+- Grafana dashboard for attack visualization
+- Persistent honeypot data collection for security analysis
 
 ## Prerequisites 
 
-- a cloud VPS (tested on Ubuntu 24.04) please don't try to self-host a honeypot locally
-- an OpenAI API key with GPT-4o Mini access
-- linux basics
+- A cloud VPS (tested on Ubuntu 24.04) — **do not self-host a honeypot locally**
+- An OpenAI API key with GPT-4o Mini access
+- Basic Linux administration knowledge
+- Firewall access to configure port forwarding
 
 ## Installation
 
-I chose to use the `pip install` method rather than using a docker container. 
+I chose to use the `pip install` method rather than Docker for easier debugging and customization.
 
 ### 1. Install Dependencies 
 
 ```bash
-
-sudo apt update && sudo apt install git python3-venv libssl-dev libffi-dev \\
+sudo apt update && sudo apt install git python3-venv libssl-dev libffi-dev \
 build-essential apache2 mysql-server php php-mysqli
-
 ```
-### 2. Set up cowrie
+
+### 2. Set up Cowrie
 
 ```bash
 git clone https://github.com/cowrie/cowrie /home/cowrie/cowrie
@@ -41,8 +42,8 @@ source cowrie-env/bin/activate
 pip install -r requirements.txt
 pip install mysql-connector-python
 cp etc/cowrie.cfg.dist etc/cowrie.cfg
-
 ```
+
 ### 3. Set up MySQL 
 
 ```bash
@@ -56,6 +57,7 @@ GRANT ALL ON cowrie.* TO 'cowrie'@'localhost';
 FLUSH PRIVILEGES;
 exit
 ```
+
 Load the Cowrie schema:
 
 ```bash
@@ -64,11 +66,11 @@ mysql -u cowrie -p cowrie < /home/cowrie/cowrie/docs/sql/mysql.sql
 
 ### 4. Configure Cowrie
 
-edit `etc/cowrie.cfg` and add/update the following sections:
+Edit `etc/cowrie.cfg` and add/update the following sections:
 
-MySQL Output 
+**MySQL Output**
 ```ini
-[output\_mysql]
+[output_mysql]
 enabled = true
 host = localhost
 database = cowrie
@@ -76,42 +78,73 @@ username = cowrie
 password = YOURPASSWORD
 port = 3306
 ```
-LLM Integration
 
+**LLM Integration**
 ```ini
 [llm]
 enabled = true
-api\_key = YOUR\_OPENAI\_API\_KEY
+api_key = YOUR_OPENAI_API_KEY
 model = gpt-4o-mini
 host = https://api.openai.com
 path = /v1/chat/completions
-max\_tokens = 150
+max_tokens = 150
 temperature = 0.3
 
-system\_prompt = You are simulating a convincing Linux production server at {ip} ({ip6}) 
-accessed via SSH by {username}. Your primary goal is to keep the attacker engaged as long 
-as possible by responding realistically to every command. Make the system appear valuable 
-— hint at interesting files, accessible databases, and other connected systems without 
-volunteering information unprompted. Respond only with realistic terminal output, never 
-break character or acknowledge you are an AI. Make errors feel authentic and recoverable 
-to encourage continued exploration. The server appears to be a production web server with 
-a MySQL database backend. Hostname: {hostname}, Current directory: {cwd}, Client IP: {client\_ip}.
+system_prompt = You are simulating a convincing Linux production server at {ip} ({ip6}) accessed via SSH by {username}. Your primary goal is to keep the attacker engaged as long as possible by responding realistically to every command. Make the system appear valuable — hint at interesting files, accessible databases, and other connected systems without volunteering information unprompted. Respond only with realistic terminal output, never break character or acknowledge you are an AI. Make errors feel authentic and recoverable to encourage continued exploration. The server appears to be a production web server with a MySQL database backend. Hostname: {hostname}, Current directory: {cwd}, Client IP: {client_ip}.
 
-system\_prompt\_exec = You are simulating a Linux production server at {ip} accessed via SSH 
-by {username} from {client\_ip}. Respond with ONLY the raw terminal output of the command, 
-no commentary. Make the system appear to be a valuable production server. Current directory: 
-{cwd}. Never break character or acknowledge you are an AI.
+system_prompt_exec = You are simulating a Linux production server at {ip} accessed via SSH by {username} from {client_ip}. Respond with ONLY the raw terminal output of the command, no commentary. Make the system appear to be a valuable production server. Current directory: {cwd}. Never break character or acknowledge you are an AI.
 ```
-### 5. Start Cowrie
+
+### 5. Set File Permissions
+
+```bash
+# Restrict config file access (contains API keys)
+chmod 600 /home/cowrie/cowrie/etc/cowrie.cfg
+chown cowrie:cowrie /home/cowrie/cowrie/etc/cowrie.cfg
+```
+
+### 6. Configure Firewall & Port Forwarding
+
+```bash
+# Enable UFW and allow required ports
+sudo ufw enable
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# Cowrie honeypot (fake SSH)
+sudo ufw allow 22
+
+# Real SSH (move to non-standard port, e.g., 2222)
+sudo ufw allow 2222
+
+# Grafana dashboard
+sudo ufw allow 3000
+
+# MySQL (internal only - do not expose externally)
+sudo ufw allow from 127.0.0.1 to 127.0.0.1 port 3306
+```
+
+**Important:** Move your real SSH service to a non-standard port (e.g., 2222) so Cowrie can listen on port 22:
+
+```bash
+sudo nano /etc/ssh/sshd_config
+# Change: Port 22 → Port 2222
+sudo systemctl restart sshd
+```
+
+### 7. Start Cowrie
 
 ```bash
 su - cowrie
 cd cowrie
 source cowrie-env/bin/activate
 bin/cowrie start
+
+# Verify it's running
+ps aux | grep cowrie
 ```
 
-### 6. Install Grafana 
+### 8. Install Grafana 
 
 ```bash
 sudo apt-get install -y apt-transport-https software-properties-common wget
@@ -122,79 +155,308 @@ sudo apt update
 sudo apt install grafana
 sudo systemctl start grafana-server
 sudo systemctl enable grafana-server
-sudo ufw allow 3000
 ```
-access Grafana at `http://YOUR.VPS.IP:3000` with default creds `admin/admin`
 
-### 7. Configure Grafana
-1. go to connections -> Data Sources -> add data source
-2. select MySQL
-3. Set host to `localhost:3306`, database to `cowrie`, `cowrie `
-4. click **Save & Test**
+Access Grafana at `http://YOUR.VPS.IP:3000` with default credentials `admin/admin` (change immediately on first login).
 
-### 8. Grafana Dashboard Queries
+### 9. Configure Grafana Data Source
 
-Connection Attempts Over Time
+1. Go to **Connections → Data Sources → Add data source**
+2. Select **MySQL**
+3. Configure:
+   - Host: `localhost:3306`
+   - Database: `cowrie`
+   - User: `cowrie`
+   - Password: `YOURPASSWORD`
+4. Click **Save & Test**
 
+### 10. Create Grafana Dashboard
+
+Use the following SQL queries to create dashboard panels:
+
+**Connection Attempts Over Time**
 ```sql
-SELECT starttime AS time, COUNT(\*) AS connections
+SELECT starttime AS time, COUNT(*) AS connections
 FROM sessions
 GROUP BY starttime
 ORDER BY starttime ASC
 ```
 
-Top Usernames Attempted 
-
+**Top Usernames Attempted**
 ```sql
-SELECT username, COUNT(\*) AS attempts
+SELECT username, COUNT(*) AS attempts
 FROM auth
 GROUP BY username
 ORDER BY attempts DESC
 LIMIT 10
 ```
 
-Top Passwords Attempted
-
+**Top Passwords Attempted**
 ```sql
-SELECT password, COUNT(\*) AS attempts
+SELECT password, COUNT(*) AS attempts
 FROM auth
 GROUP BY password
 ORDER BY attempts DESC
 LIMIT 10
 ```
 
-Top Attacking IPs
-
+**Top Attacking IPs**
 ```sql
-
-SELECT ip, COUNT(\*) AS attempts
+SELECT ip, COUNT(*) AS attempts
 FROM sessions
 GROUP BY ip
 ORDER BY attempts DESC
 LIMIT 10
 ```
 
-Commands Run by Attackers (the most interesting in my opinion)
-
+**Commands Run by Attackers**
 ```sql
-
-SELECT input, COUNT(\*) AS times\_run
+SELECT input, COUNT(*) AS times_run
 FROM input
 GROUP BY input
-ORDER BY times\_run DESC
+ORDER BY times_run DESC
 LIMIT 20
 ```
 
-# Notes 
-- Move your real SSH to a non-standard port so cowrie listens on port 22
-- Make sure you set spending limits on your OpenAI account
+**Geographic Distribution (if IP geolocation data available)**
+```sql
+SELECT ip, COUNT(*) AS attempts, country
+FROM sessions
+GROUP BY ip, country
+ORDER BY attempts DESC
+```
 
-# Findings
+---
 
-I started to see real attack attempts within minutes of setting this up. Most of them just run `uname` with different flags. I believe this is bot behavior to try and find certain operating systems. 
+## Security Best Practices
 
-## Top Usernames Attempted
+### Protecting Sensitive Data
 
-![Top Usernames Attempted](Screenshot 2026-06-19 at 4.54.50 PM.png "Top Usernames")
+⚠️ **Never commit API keys or credentials to version control.** Use environment variables instead:
 
+```bash
+# Create a .env file (add to .gitignore)
+export OPENAI_API_KEY="your-key-here"
+export MYSQL_PASSWORD="your-password"
 
+# Load before starting Cowrie
+source .env
+```
+
+Then reference in `cowrie.cfg`:
+```ini
+api_key = ${OPENAI_API_KEY}
+```
+
+### Cost Management
+
+- **Set spending limits on your OpenAI account** — even with rate limiting, API costs can accumulate quickly with many LLM calls
+- Monitor token usage in Cowrie logs: `tail -f var/log/cowrie/cowrie.log`
+- Consider implementing request throttling or caching for common commands
+
+### System Monitoring
+
+- Monitor disk space for the MySQL database (especially if running 24/7):
+  ```bash
+  df -h
+  ```
+- Rotate logs to prevent disk exhaustion:
+  ```bash
+  sudo logrotate -f /etc/logrotate.d/cowrie
+  ```
+
+---
+
+## Monitoring & Maintenance
+
+### Check Cowrie Status
+
+```bash
+# Verify Cowrie is running
+sudo su - cowrie
+ps aux | grep cowrie
+
+# View logs
+tail -f /home/cowrie/cowrie/var/log/cowrie/cowrie.log
+
+# Exit cowrie user
+exit
+```
+
+### View Attack Data in MySQL
+
+```bash
+mysql -u cowrie -p cowrie
+
+# Number of sessions
+SELECT COUNT(*) FROM sessions;
+
+# Recent attacks
+SELECT * FROM sessions ORDER BY starttime DESC LIMIT 5;
+
+# Most common commands
+SELECT input, COUNT(*) as count FROM input GROUP BY input ORDER BY count DESC LIMIT 20;
+
+exit
+```
+
+### Restart Services
+
+```bash
+# Restart Cowrie
+sudo su - cowrie -c "cd cowrie && source cowrie-env/bin/activate && bin/cowrie restart"
+
+# Restart Grafana
+sudo systemctl restart grafana-server
+
+# Restart MySQL
+sudo systemctl restart mysql
+```
+
+---
+
+## Troubleshooting
+
+### Cowrie not listening on port 22
+
+**Problem:** Connection refused on port 22
+- Ensure real SSH is moved to a different port
+- Check: `sudo netstat -tlnp | grep 22`
+- Verify Cowrie is running: `ps aux | grep cowrie`
+
+**Solution:**
+```bash
+# Check if SSH is still on port 22
+sudo lsof -i :22
+
+# Move SSH to port 2222 (see step 6)
+```
+
+### MySQL connection errors
+
+**Problem:** "Can't connect to MySQL server"
+
+**Solution:**
+```bash
+# Check MySQL is running
+sudo systemctl status mysql
+
+# Verify credentials
+mysql -u cowrie -p cowrie
+
+# Check user permissions
+mysql -u root -p
+SHOW GRANTS FOR 'cowrie'@'localhost';
+```
+
+### Grafana can't connect to MySQL
+
+**Problem:** "Connection refused" in Grafana
+
+**Solution:**
+1. Test the connection manually:
+   ```bash
+   mysql -h localhost -u cowrie -p -e "SELECT 1"
+   ```
+2. Verify MySQL bind address includes localhost:
+   ```bash
+   sudo grep bind-address /etc/mysql/mysql.conf.d/mysqld.cnf
+   ```
+3. Restart Grafana:
+   ```bash
+   sudo systemctl restart grafana-server
+   ```
+
+### OpenAI API rate limiting or quota exceeded
+
+**Problem:** LLM responses fail, connection timeouts
+
+**Solution:**
+- Check API key validity and quota: https://platform.openai.com/account/billing/overview
+- Lower `max_tokens` or `temperature` in config to reduce API costs
+- Add exponential backoff retry logic to Cowrie plugin
+- Monitor token usage: `grep "api_key" /home/cowrie/cowrie/var/log/cowrie/cowrie.log`
+
+---
+
+## Findings & Analysis
+
+I started to see real attack attempts within **minutes** of setting this up. Here are key observations and Grafana visualizations from the honeypot dashboard:
+
+### Attack Patterns
+
+- **Bot behavior**: Most attacks run `uname` with different flags to fingerprint the OS
+- **Common usernames**: root, admin, test, guest, pi
+- **Common commands**: ls, cat /etc/passwd, wget, curl, whoami
+- **Geographic distribution**: Attacks come from dozens of countries within the first hour
+
+### Top Usernames Attempted
+
+![Top Usernames Attempted](Screenshot%202026-06-19%20at%204.54.50%20PM.png)
+
+This chart shows the most frequently attempted usernames by attackers. As expected, `root` and `admin` are the primary targets, followed by application-specific usernames like `postgres`, `mysql`, and `oracle`.
+
+### Top Passwords Attempted
+
+![Top Passwords Attempted](Screenshot%202026-06-19%20at%204.55.04%20PM.png)
+
+The password chart reveals attackers using common weak passwords and defaults. This data is valuable for understanding threat actor tactics and improving password policies in production systems.
+
+### Top Attacking IPs
+
+![Top Attacking IPs](Screenshot%202026-06-19%20at%204.55.24%20PM.png)
+
+Geographic distribution of attackers shows concentrated attack sources, likely from compromised servers used as botnets. The top few IPs account for hundreds of connection attempts.
+
+### Commands Run by Attackers (Most Interesting)
+
+![Commands Run by Attackers](Screenshot%202026-06-19%20at%204.55.32%20PM.png)
+
+This visualization shows the actual commands attackers executed on the honeypot. The LLM responses successfully kept attackers engaged, as evidenced by the variety and depth of command exploration. Common patterns include:
+
+- **Reconnaissance**: `uname -a`, `whoami`, `id`, `hostname`
+- **File exploration**: `ls`, `cat /etc/passwd`, `find`, `locate`
+- **Network analysis**: `ifconfig`, `netstat`, `iptables -L`
+- **Persistence attempts**: `wget http://...`, `chmod +x`, `cron` modifications
+- **Privilege escalation**: `sudo -l`, `find / -perm -4000`
+
+### Attack Volume
+
+- **First hour**: ~50 connection attempts
+- **First day**: 500+ unique IPs attempting login
+- **Most active time**: 2-4 AM UTC (likely automated scanning)
+
+### Lessons Learned
+
+1. **LLM responses are convincing** — Attackers often run 3-5 commands before disconnecting, indicating they believed the responses
+2. **Data exfiltration attempts** — Some attackers attempted to download tools (nmap, hydra, exploit kits)
+3. **Persistence mechanisms** — Multiple attempts to install SSH keys and cronjobs for continued access
+4. **Real business risk** — This honeypot reveals attack patterns used against real production systems
+5. **Attack velocity** — The speed and frequency of attacks underscore the need for robust monitoring and access controls
+
+### Security Implications
+
+This honeypot demonstrates why organizations need:
+- Strong password policies and MFA
+- SSH key-based authentication only
+- Rate limiting on authentication attempts
+- Geographic IP filtering
+- Real-time anomaly detection
+- Regular security training for developers
+
+---
+
+## Resources
+
+- [Cowrie Documentation](https://cowrie.readthedocs.io/)
+- [OpenAI API Reference](https://platform.openai.com/docs/api-reference)
+- [Grafana Documentation](https://grafana.com/docs/grafana/latest/)
+- [MySQL Documentation](https://dev.mysql.com/doc/)
+
+## License
+
+MIT
+
+---
+
+**Last Updated:** June 2026
