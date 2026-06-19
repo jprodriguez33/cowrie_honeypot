@@ -185,6 +185,6 @@ ORDER BY times\_run DESC
 LIMIT 20
 ```
 
-#Notes 
+# Notes 
 - Move your real SSH to a non-standard port so cowrie listens on port 22
 - Make sure you set spending limits on your OpenAI account
