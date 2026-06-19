@@ -188,3 +188,11 @@ LIMIT 20
 # Notes 
 - Move your real SSH to a non-standard port so cowrie listens on port 22
 - Make sure you set spending limits on your OpenAI account
+
+# Findings
+
+I started to see real attack attempts within minutes of setting this up. Most of them just run `uname` with different flags. I believe this is bot behavior to try and find certain operating systems. 
+
+## Top Usernames Attempted
+
+
