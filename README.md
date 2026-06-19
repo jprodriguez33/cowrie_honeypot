@@ -250,7 +250,7 @@ api_key = ${OPENAI_API_KEY}
 
 ### Cost Management
 
-- **Set spending limits on your OpenAI account** — even with rate limiting, API costs can accumulate quickly with many LLM calls
+- **Set spending limits on your OpenAI account**
 - Monitor token usage in Cowrie logs: `tail -f var/log/cowrie/cowrie.log`
 - Consider implementing request throttling or caching for common commands
 
