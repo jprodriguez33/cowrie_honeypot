@@ -195,4 +195,6 @@ I started to see real attack attempts within minutes of setting this up. Most of
 
 ## Top Usernames Attempted
 
+![Top Usernames Attempted](Screenshot 2026-06-19 at 4.54.50 PM.png)
+
 
