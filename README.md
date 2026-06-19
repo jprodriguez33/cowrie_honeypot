@@ -381,14 +381,14 @@ SHOW GRANTS FOR 'cowrie'@'localhost';
 
 ## Findings & Analysis
 
-I started to see real attack attempts within **minutes** of setting this up. Here are key observations and Grafana visualizations from the honeypot dashboard:
+I started to see real attack attempts within **minutes** of setting this up
 
 ### Attack Patterns
 
 - **Bot behavior**: Most attacks run `uname` with different flags to fingerprint the OS
 - **Common usernames**: root, admin, test, guest, pi
 - **Common commands**: ls, cat /etc/passwd, wget, curl, whoami
-- **Geographic distribution**: Attacks come from dozens of countries within the first hour
+- **Geographic distribution**: Attacks come from dozens of countries within the first hour (probably tor nodes and proxies)
 
 ### Top Usernames Attempted
 
@@ -396,6 +396,7 @@ I started to see real attack attempts within **minutes** of setting this up. Her
 
 This chart shows the most frequently attempted usernames by attackers. As expected, `root` and `admin` are the primary targets, followed by application-specific usernames like `postgres`, `mysql`, and `oracle`.
 
+Attackers also used `claude` and `minecraft` usernames potentially looking for vulnerable minecraft servers and claude instances. 
 **Key insights:**
 - Root account is targeted in ~40% of all authentication attempts
 - Database usernames (postgres, mysql, oracle) are commonly exploited
@@ -442,21 +443,6 @@ This visualization shows the actual commands attackers executed on the honeypot.
 - Attackers use standard penetration testing playbooks
 - Data exfiltration tools are actively downloaded and executed
 
-### Attack Volume
-
-- **First hour**: ~50 connection attempts
-- **First day**: 500+ unique IPs attempting login
-- **Peak time**: 2-4 AM UTC (likely automated scanning windows)
-- **Connection success rate**: 0% (Cowrie catches all attempts)
-
-### Lessons Learned
-
-1. **LLM responses are convincing** — Attackers often run 3-5 commands before disconnecting, indicating they believed the responses were real
-2. **Data exfiltration attempts** — Some attackers attempted to download tools (nmap, hydra, exploit kits) directly from the honeypot
-3. **Persistence mechanisms** — Multiple attempts to install SSH keys and cronjobs for continued access
-4. **Real business risk** — This honeypot reveals attack patterns used against real production systems
-5. **Attack velocity** — The speed and frequency of attacks underscore the need for robust monitoring and access controls
-6. **Botnet coordination** — Repeated attacks from same IPs suggest coordinated campaigns
 
 ### Security Implications
 
