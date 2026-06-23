@@ -404,7 +404,7 @@ Attackers also used `claude` and `minecraft` usernames potentially looking for v
 
 ### Top Passwords Attempted
 
-![Top Passwords Attempted](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/screenshots/top_passwords.png)
+![Top Passwords Attempted](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/screenshots/top_passwords)
 
 The password chart reveals attackers using common weak passwords and defaults. This data is valuable for understanding threat actor tactics and improving password policies in production systems.
 
@@ -426,7 +426,7 @@ Geographic distribution of attackers shows concentrated attack sources, likely f
 
 ### Commands Run by Attackers (Most Interesting)
 
-![Commands Run by Attackers](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/screenshots/most_frequent_commands.png)
+![Commands Run by Attackers](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/screenshots/most_frequent_commands)
 
 This visualization shows the actual commands attackers executed on the honeypot. The LLM responses successfully kept attackers engaged, as evidenced by the variety and depth of command exploration. Common patterns include:
 
