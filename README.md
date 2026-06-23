@@ -392,7 +392,7 @@ I started to see real attack attempts within **minutes** of setting this up
 
 ### Top Usernames Attempted
 
-![Top Usernames Attempted](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/Screenshot%202026-06-19%20at%204.54.50%E2%80%AFPM.png)
+![Top Usernames Attempted](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/screenshots/top_usernames)
 
 This chart shows the most frequently attempted usernames by attackers. As expected, `root` and `admin` are the primary targets, followed by application-specific usernames like `postgres`, `mysql`, and `oracle`.
 
@@ -404,7 +404,7 @@ Attackers also used `claude` and `minecraft` usernames potentially looking for v
 
 ### Top Passwords Attempted
 
-![Top Passwords Attempted](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/top_passwords.png)
+![Top Passwords Attempted](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/screenshots/top_passwords.png)
 
 The password chart reveals attackers using common weak passwords and defaults. This data is valuable for understanding threat actor tactics and improving password policies in production systems.
 
@@ -415,7 +415,7 @@ The password chart reveals attackers using common weak passwords and defaults. T
 
 ### Top Attacking IPs
 
-![Top Attacking IPs](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/Screenshot%202026-06-19%20at%204.55.24%E2%80%AFPM.png)
+![Top Attacking IPs](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/screenshots/)
 
 Geographic distribution of attackers shows concentrated attack sources, likely from compromised servers used as botnets. The top few IPs account for hundreds of connection attempts.
 
