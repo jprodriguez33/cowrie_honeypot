@@ -426,7 +426,7 @@ Geographic distribution of attackers shows concentrated attack sources, likely f
 
 ### Commands Run by Attackers (Most Interesting)
 
-![Commands Run by Attackers](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/screenshots/most_frequent_commands)
+![Commands Run by Attackers](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/screenshots/most_frequent_commands.png)
 
 This visualization shows the actual commands attackers executed on the honeypot. The LLM responses successfully kept attackers engaged, as evidenced by the variety and depth of command exploration. Common patterns include:
 
