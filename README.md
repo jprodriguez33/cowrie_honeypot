@@ -404,7 +404,7 @@ Attackers also used `claude` and `minecraft` usernames potentially looking for v
 
 ### Top Passwords Attempted
 
-![Top Passwords Attempted](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/Screenshot%202026-06-19%20at%204.55.04%E2%80%AFPM.png)
+![Top Passwords Attempted](https://raw.githubusercontent.com/jprodriguez33/cowrie_honeypot/main/top_passwords.png)
 
 The password chart reveals attackers using common weak passwords and defaults. This data is valuable for understanding threat actor tactics and improving password policies in production systems.
 
